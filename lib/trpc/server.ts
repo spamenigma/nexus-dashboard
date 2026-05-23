@@ -1,9 +1,11 @@
 import { initTRPC, TRPCError } from "@trpc/server";
-import { isAuthenticated } from "@/lib/session";
+import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
+import { isAuthenticatedFromCookieHeader } from "@/lib/session";
 import { z } from "zod";
 
-export async function createContext() {
-  const authed = await isAuthenticated();
+export function createContext({ req }: FetchCreateContextFnOptions) {
+  const cookieHeader = req.headers.get("cookie") ?? "";
+  const authed = isAuthenticatedFromCookieHeader(cookieHeader);
   return { authed };
 }
 

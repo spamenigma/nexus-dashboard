@@ -51,3 +51,13 @@ export async function isAuthenticated(): Promise<boolean> {
   if (!token) return false;
   return verifyToken(token);
 }
+
+export function isAuthenticatedFromCookieHeader(cookieHeader: string): boolean {
+  const token = cookieHeader
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
+    ?.slice(SESSION_COOKIE.length + 1);
+  if (!token) return false;
+  return verifyToken(token);
+}
