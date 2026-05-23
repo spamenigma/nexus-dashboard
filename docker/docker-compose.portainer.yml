@@ -1,0 +1,46 @@
+# Nexus Dashboard — Portainer Stack
+#
+# Setup (once, on tethys):
+#   docker volume create nexus-dashboard_data
+#
+# In Portainer → Stacks → Add stack → Repository:
+#   Repository URL:  https://github.com/spamenigma/nexus-dashboard
+#   Compose path:    docker/docker-compose.portainer.yml
+#   GitOps:          enabled (auto-redeploy on push)
+#
+# In the "Env" tab, add:
+#   ENCRYPTION_KEY   <output of: openssl rand -hex 32>
+#   SESSION_SECRET   <output of: openssl rand -hex 32>
+
+services:
+  nexus:
+    image: nexus-dashboard:latest
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/data/nexus.db
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - NODE_ENV=production
+    volumes:
+      - nexus_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  nexus_data:
+    external: true
+    name: nexus-dashboard_data
