@@ -6,6 +6,7 @@ import { z } from "zod";
 export function createContext({ req }: FetchCreateContextFnOptions) {
   const cookieHeader = req.headers.get("cookie") ?? "";
   const authed = isAuthenticatedFromCookieHeader(cookieHeader);
+  console.log(`[trpc] ${req.method} ${new URL(req.url).pathname} authed=${authed} cookie=${cookieHeader ? "yes" : "no"}`);
   return { authed };
 }
 
