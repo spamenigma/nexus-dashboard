@@ -10,7 +10,7 @@ RUN npm ci --omit=dev
 # --- builder ---
 FROM base AS builder
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN NODE_ENV=development npm ci
 COPY . .
 RUN npx prisma generate
 ENV DATABASE_URL=file:/data/nexus.db
