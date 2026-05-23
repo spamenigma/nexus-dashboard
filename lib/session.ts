@@ -4,14 +4,14 @@ import { createHmac, timingSafeEqual } from "crypto";
 const SESSION_COOKIE = "nexus_session";
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000; // 8 hours
 
-function secret(): string {
-  const s = process.env.SESSION_SECRET;
-  if (!s) throw new Error("SESSION_SECRET env var is not set");
-  return s;
+function secret(): string | null {
+  return process.env.SESSION_SECRET ?? null;
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", secret()).update(payload).digest("hex");
+  const s = secret();
+  if (!s) return "";
+  return createHmac("sha256", s).update(payload).digest("hex");
 }
 
 function makeToken(): string {
@@ -21,10 +21,15 @@ function makeToken(): string {
 }
 
 function verifyToken(token: string): boolean {
+  if (!secret()) return false;
   const [payload, sig] = token.split(".");
   if (!payload || !sig) return false;
   const expected = sign(payload);
-  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
+  try {
+    if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
+  } catch {
+    return false;
+  }
   const exp = parseInt(payload, 10);
   return Date.now() < exp;
 }
