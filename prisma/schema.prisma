@@ -44,3 +44,24 @@ model Setting {
   key   String @id
   value String // JSON value
 }
+
+model Notification {
+  id              String   @id @default(cuid())
+  integrationId   String?
+  integrationName String?
+  type            String   // "error" | "recovery" | "down" | "warning" | "info"
+  severity        String   // "critical" | "warning" | "info"
+  message         String
+  read            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model NotificationChannel {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // "discord" | "slack" | "ntfy" | "gotify" | "telegram" | "webhook"
+  config    String   @default("{}") // AES-256-GCM encrypted JSON
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

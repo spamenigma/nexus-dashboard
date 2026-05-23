@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Puzzle, Palette, Shield, Info, HardDriveDownload } from "lucide-react";
+import { ArrowLeft, Puzzle, Palette, Shield, Info, HardDriveDownload, Bell } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const NAV = [
   { href: "/settings/integrations", label: "Integrations", icon: Puzzle },
   { href: "/settings/theme", label: "Theme", icon: Palette },
+  { href: "/settings/notifications", label: "Notifications", icon: Bell },
   { href: "/settings/auth", label: "Security", icon: Shield },
   { href: "/settings/backup", label: "Backup", icon: HardDriveDownload },
   { href: "/settings/about", label: "About", icon: Info },

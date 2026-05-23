@@ -37,3 +37,13 @@ export type Integration = Prisma.IntegrationModel
  * 
  */
 export type Setting = Prisma.SettingModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel
+/**
+ * Model NotificationChannel
+ * 
+ */
+export type NotificationChannel = Prisma.NotificationChannelModel

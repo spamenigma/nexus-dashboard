@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Unlock, Plus, Settings, LayoutDashboard, Check, X, Pencil, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { AddWidgetModal } from "./AddWidgetModal";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 
@@ -283,6 +284,8 @@ export function DashboardHeader({
               </motion.button>
             )}
           </AnimatePresence>
+
+          <NotificationBell />
 
           <button
             onClick={onToggleEdit}

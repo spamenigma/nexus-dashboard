@@ -242,6 +242,6 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` skipped/deferred
 | Per-widget accent colour override | Low | Deferred — CSS variables approach would need widget-level scope |
 | Page-specific background override | Low | Deferred — theme applies globally |
 | Postgres backend option | Low | SQLite WAL + shared volume sufficient for homelab |
-| Notifications panel (aggregated alerts) | Medium | Unread badge + slide-out panel for all DOWN/error events |
+| Notifications panel (aggregated alerts) | Done | Bell icon with unread badge, slide-out panel, outbound channels (Discord, Slack, ntfy, Gotify, Telegram, Webhook) |
 | TOTP auth | Low | PIN auth deemed sufficient; TOTP would add significant complexity |
 | Pathfinders Status widget | Medium | Custom widget for LiveKit/Discord bot/TS bot — use Health Check for now |

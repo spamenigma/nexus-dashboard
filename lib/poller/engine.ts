@@ -20,6 +20,7 @@ import { fetchDoku } from "./fetchers/doku";
 import { fetchCloudflare } from "./fetchers/cloudflare";
 import { fetchOPNsense } from "./fetchers/opnsense";
 import { connectMqtt, getMqttData, disconnectMqtt } from "./fetchers/mqtt-client";
+import { processIntegrationUpdate, processIntegrationError } from "@/lib/notifications/notifier";
 
 const POLL_INTERVALS: Record<string, number> = {
   "netdata": 5_000,
@@ -63,11 +64,11 @@ async function schedulePoll() {
       const interval = POLL_INTERVALS[integration.type];
       if (!interval) continue;
 
-      pollOne(integration.id, integration.type, integration.config);
+      pollOne(integration.id, integration.type, integration.config, integration.name);
       const timer = setInterval(async () => {
         const fresh = await db.integration.findUnique({ where: { id: integration.id } }).catch(() => null);
         if (!fresh) { clearInterval(timer); timers.delete(integration.id); return; }
-        pollOne(fresh.id, fresh.type, fresh.config);
+        pollOne(fresh.id, fresh.type, fresh.config, fresh.name);
       }, interval);
       timers.set(integration.id, timer);
     }
@@ -97,7 +98,7 @@ function startMqttIntegration(id: string, configCiphertext: string) {
   timers.set(id, 0 as unknown as ReturnType<typeof setInterval>);
 }
 
-async function pollOne(id: string, type: string, configCiphertext: string) {
+async function pollOne(id: string, type: string, configCiphertext: string, name = "") {
   try {
     const config = decryptJson<Record<string, unknown>>(configCiphertext);
     const url = config.url as string;
@@ -165,14 +166,16 @@ async function pollOne(id: string, type: string, configCiphertext: string) {
 
     setCache(id, data);
     broadcast("integration-update", { integrationId: id, type, data });
+    processIntegrationUpdate(id, name, type, data).catch(console.error);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     setCacheError(id, msg);
     broadcast("integration-error", { integrationId: id, type, error: msg });
+    processIntegrationError(id, name, msg).catch(console.error);
   }
 }
 
-export function addIntegrationToPoller(id: string, type: string, configCiphertext: string) {
+export function addIntegrationToPoller(id: string, type: string, configCiphertext: string, name = "") {
   if (timers.has(id)) return;
 
   if (type === "mqtt") {
@@ -182,11 +185,11 @@ export function addIntegrationToPoller(id: string, type: string, configCiphertex
 
   const interval = POLL_INTERVALS[type];
   if (!interval) return;
-  pollOne(id, type, configCiphertext);
+  pollOne(id, type, configCiphertext, name);
   const timer = setInterval(async () => {
     const fresh = await db.integration.findUnique({ where: { id } }).catch(() => null);
     if (!fresh) { clearInterval(timer); timers.delete(id); return; }
-    pollOne(fresh.id, fresh.type, fresh.config);
+    pollOne(fresh.id, fresh.type, fresh.config, fresh.name);
   }, interval);
   timers.set(id, timer);
 }
