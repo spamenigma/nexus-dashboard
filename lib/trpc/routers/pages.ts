@@ -13,7 +13,7 @@ export const pagesRouter = router({
       return db.page.create({
         data: {
           name: input.name,
-          slug: input.name.toLowerCase().replace(/\s+/g, "-"),
+          slug: input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "page",
           icon: input.icon ?? "layout-dashboard",
           order: count,
         },

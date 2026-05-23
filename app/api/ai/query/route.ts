@@ -3,6 +3,10 @@ import { isAuthenticated } from "@/lib/session";
 import { db } from "@/lib/db";
 import { decryptJson } from "@/lib/crypto";
 
+const ALLOWED_TYPES = new Set(["anthropic", "ollama", "openai"]);
+const MAX_PROMPT_LEN = 8000;
+const MAX_MODEL_LEN = 100;
+
 export async function POST(req: NextRequest) {
   if (!(await isAuthenticated())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -14,9 +18,13 @@ export async function POST(req: NextRequest) {
   };
 
   if (!prompt?.trim()) return NextResponse.json({ error: "No prompt" }, { status: 400 });
+  if (prompt.length > MAX_PROMPT_LEN) return NextResponse.json({ error: "Prompt too long" }, { status: 400 });
+  if (model && model.length > MAX_MODEL_LEN) return NextResponse.json({ error: "Invalid model" }, { status: 400 });
+  if (systemPrompt && systemPrompt.length > MAX_PROMPT_LEN) return NextResponse.json({ error: "System prompt too long" }, { status: 400 });
 
   const integration = await db.integration.findUnique({ where: { id: integrationId } });
   if (!integration) return NextResponse.json({ error: "Integration not found" }, { status: 404 });
+  if (!ALLOWED_TYPES.has(integration.type)) return NextResponse.json({ error: "Unsupported integration type" }, { status: 400 });
 
   const config = decryptJson<Record<string, unknown>>(integration.config);
 

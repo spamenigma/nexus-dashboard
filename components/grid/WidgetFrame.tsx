@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense, lazy, type ComponentType } from "react";
+import { useState, Suspense, lazy, Component, type ComponentType, type ReactNode, type ErrorInfo } from "react";
 import { X, Settings2, GripVertical, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
@@ -36,12 +36,21 @@ function WidgetSkeleton() {
   );
 }
 
-class WidgetErrorBoundary extends Error {}
+class WidgetErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
 
-function withErrorBoundary(Component: ComponentType<WidgetProps>): ComponentType<WidgetProps> {
-  return function WrappedWidget(props: WidgetProps) {
-    return <Component {...props} />;
-  };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[widget] render error:", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.failed) return <WidgetError />;
+    return this.props.children;
+  }
 }
 
 export function WidgetFrame({
@@ -115,9 +124,11 @@ export function WidgetFrame({
 
       {/* Widget content */}
       <div className="flex-1 min-h-0 p-3">
-        <Suspense fallback={<WidgetSkeleton />}>
-          <LazyWidget id={id} config={config} editMode={editMode} />
-        </Suspense>
+        <WidgetErrorBoundary>
+          <Suspense fallback={<WidgetSkeleton />}>
+            <LazyWidget id={id} config={config} editMode={editMode} />
+          </Suspense>
+        </WidgetErrorBoundary>
       </div>
     </motion.div>
   );

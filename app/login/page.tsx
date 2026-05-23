@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard } from "lucide-react";
 
+const PIN_BOXES = 6;
+
 export default function LoginPage() {
-  const [pin, setPin] = useState(["", "", "", "", "", ""]);
+  const [pin, setPin] = useState<string[]>(Array(PIN_BOXES).fill(""));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
@@ -15,6 +17,7 @@ export default function LoginPage() {
   useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
   async function submit(fullPin: string) {
+    if (fullPin.length < 4) return;
     setLoading(true);
     setError("");
     const res = await fetch("/api/auth/login", {
@@ -27,10 +30,11 @@ export default function LoginPage() {
       router.push("/");
       router.refresh();
     } else {
-      setError("Incorrect PIN");
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      setError(body.error ?? "Incorrect PIN");
       setShake(true);
       setTimeout(() => setShake(false), 500);
-      setPin(["", "", "", "", "", ""]);
+      setPin(Array(PIN_BOXES).fill(""));
       inputRefs.current[0]?.focus();
     }
   }
@@ -41,18 +45,12 @@ export default function LoginPage() {
     next[idx] = value.slice(-1);
     setPin(next);
     setError("");
-    if (value && idx < 5) {
+    if (value && idx < PIN_BOXES - 1) {
       inputRefs.current[idx + 1]?.focus();
     }
-    const filled = next.filter(Boolean);
-    if (filled.length === next.filter((_, i) => i < 4).length + (next[4] ? 1 : 0) + (next[5] ? 1 : 0)) {
-      const full = next.join("");
-      if (full.length >= 4 && next.every((v, i) => i >= full.length || v !== "")) {
-        const nonEmpty = next.filter(Boolean);
-        if (nonEmpty.length === next.findLastIndex((v) => v !== "") + 1 && nonEmpty.length >= 4) {
-          submit(next.slice(0, nonEmpty.length).join(""));
-        }
-      }
+    // Auto-submit when all boxes are filled
+    if (next.every(Boolean)) {
+      submit(next.join(""));
     }
   }
 
@@ -61,8 +59,8 @@ export default function LoginPage() {
       inputRefs.current[idx - 1]?.focus();
     }
     if (e.key === "Enter") {
-      const full = pin.join("").trim();
-      if (full.length >= 4) submit(full);
+      const filled = pin.join("");
+      if (filled.length >= 4) submit(filled);
     }
   }
 

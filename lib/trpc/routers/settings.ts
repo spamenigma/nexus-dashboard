@@ -1,8 +1,12 @@
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, publicProcedure, z } from "../server";
 import { db } from "@/lib/db";
 import { isPinSetup, setupPin, verifyPin } from "@/lib/auth";
 import { readFileSync } from "fs";
 import { join } from "path";
+
+// These keys are managed exclusively through auth endpoints — never via settings.set/import
+const PROTECTED_KEYS = new Set(["auth.pinHash", "auth.setupDone"]);
 
 export const settingsRouter = router({
   isPinSetup: publicProcedure.query(() => isPinSetup()),
@@ -32,13 +36,16 @@ export const settingsRouter = router({
 
   set: protectedProcedure
     .input(z.object({ key: z.string(), value: z.unknown() }))
-    .mutation(({ input }) =>
-      db.setting.upsert({
+    .mutation(({ input }) => {
+      if (PROTECTED_KEYS.has(input.key)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cannot modify protected setting" });
+      }
+      return db.setting.upsert({
         where: { key: input.key },
         create: { key: input.key, value: JSON.stringify(input.value) },
         update: { value: JSON.stringify(input.value) },
-      })
-    ),
+      });
+    }),
 
   getTheme: publicProcedure.query(async () => {
     const row = await db.setting.findUnique({ where: { key: "theme" } });
@@ -136,8 +143,7 @@ export const settingsRouter = router({
 
       if (input.settings) {
         for (const [key, value] of Object.entries(input.settings)) {
-          // Never overwrite auth settings via import
-          if (key === "pin") continue;
+          if (PROTECTED_KEYS.has(key)) continue;
           await db.setting.upsert({
             where: { key },
             create: { key, value: JSON.stringify(value) },

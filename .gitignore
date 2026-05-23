@@ -41,6 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+/lib/generated
 
 # local database & runtime data
 *.db

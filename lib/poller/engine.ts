@@ -41,7 +41,12 @@ const POLL_INTERVALS: Record<string, number> = {
 };
 
 const timers = new Map<string, ReturnType<typeof setInterval>>();
+const mqttIds = new Set<string>(); // tracked separately — no interval timer
 let started = false;
+
+function isRegistered(id: string): boolean {
+  return timers.has(id) || mqttIds.has(id);
+}
 
 export function startPoller() {
   if (started) return;
@@ -53,9 +58,8 @@ async function schedulePoll() {
   try {
     const integrations = await db.integration.findMany();
     for (const integration of integrations) {
-      if (timers.has(integration.id)) continue;
+      if (isRegistered(integration.id)) continue;
 
-      // MQTT is handled via persistent connection, not interval polling
       if (integration.type === "mqtt") {
         startMqttIntegration(integration.id, integration.config);
         continue;
@@ -94,8 +98,7 @@ function startMqttIntegration(id: string, configCiphertext: string) {
       broadcast("integration-update", { integrationId: id, type: "mqtt", data });
     }
   );
-  // Mark as "started" so schedulePoll doesn't try again
-  timers.set(id, 0 as unknown as ReturnType<typeof setInterval>);
+  mqttIds.add(id);
 }
 
 async function pollOne(id: string, type: string, configCiphertext: string, name = "") {
@@ -176,7 +179,7 @@ async function pollOne(id: string, type: string, configCiphertext: string, name 
 }
 
 export function addIntegrationToPoller(id: string, type: string, configCiphertext: string, name = "") {
-  if (timers.has(id)) return;
+  if (isRegistered(id)) return;
 
   if (type === "mqtt") {
     startMqttIntegration(id, configCiphertext);
@@ -195,7 +198,11 @@ export function addIntegrationToPoller(id: string, type: string, configCiphertex
 }
 
 export function stopIntegrationPoller(id: string) {
+  if (mqttIds.has(id)) {
+    mqttIds.delete(id);
+    disconnectMqtt(id);
+    return;
+  }
   const timer = timers.get(id);
   if (timer) { clearInterval(timer); timers.delete(id); }
-  disconnectMqtt(id); // no-op if not an MQTT integration
 }

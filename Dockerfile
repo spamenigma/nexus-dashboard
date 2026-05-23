@@ -2,11 +2,6 @@ FROM node:22-alpine AS base
 WORKDIR /app
 ENV NODE_ENV=production
 
-# --- deps (production only, for the runner) ---
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
 # --- builder (needs dev deps for Tailwind PostCSS + Prisma CLI) ---
 FROM base AS builder
 COPY package.json package-lock.json ./

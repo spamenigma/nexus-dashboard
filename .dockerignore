@@ -2,6 +2,7 @@
 .next
 node_modules
 *.md
-.env.local
+.env
+.env.*
 dev.db
 data/

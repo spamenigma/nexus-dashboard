@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { GridLayout, noCompactor } from "react-grid-layout";
 import type { Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -75,24 +75,31 @@ function EmptyState({ editMode }: { editMode: boolean }) {
 export function DashboardGrid({ pageId, editMode, widgetStyle }: DashboardGridProps) {
   const [configuringWidget, setConfiguringWidget] = useState<DbWidget | null>(null);
   const windowWidth = useWindowWidth();
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: widgets, refetch } = trpc.widgets.byPage.useQuery({ pageId });
   const updateLayout = trpc.widgets.updateLayout.useMutation();
   const deleteWidget = trpc.widgets.delete.useMutation({ onSuccess: () => refetch() });
 
+  // Clear pending save on unmount
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+
   const onLayoutChange = useCallback(
     (layout: Layout) => {
       if (!editMode) return;
       const items = layout as unknown as Array<{ i: string; x: number; y: number; w: number; h: number }>;
-      updateLayout.mutate(
-        items.map((item) => ({
-          id: item.i,
-          posX: item.x,
-          posY: item.y,
-          w: item.w,
-          h: item.h,
-        }))
-      );
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        updateLayout.mutate(
+          items.map((item) => ({
+            id: item.i,
+            posX: item.x,
+            posY: item.y,
+            w: item.w,
+            h: item.h,
+          }))
+        );
+      }, 300);
     },
     [editMode, updateLayout]
   );
@@ -129,7 +136,12 @@ export function DashboardGrid({ pageId, editMode, widgetStyle }: DashboardGridPr
           {widgets.map((widget) => {
             const meta = getWidget(widget.type);
             if (!meta) return null;
-            const config = JSON.parse(widget.config) as Record<string, unknown>;
+            let config: Record<string, unknown>;
+            try {
+              config = JSON.parse(widget.config) as Record<string, unknown>;
+            } catch {
+              config = {};
+            }
 
             return (
               <div key={widget.id}>
