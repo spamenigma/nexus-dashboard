@@ -19,7 +19,7 @@ services:
       context: ..
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       - DATABASE_URL=file:/data/nexus.db
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
