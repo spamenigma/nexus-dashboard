@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  icon      String   @default("layout-dashboard")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  widgets   Widget[]
+}
+
+model Widget {
+  id        String   @id @default(cuid())
+  type      String
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title     String   @default("")
+  config    String   @default("{}") // JSON, integration secrets referenced by integrationId only
+  posX      Int      @default(0)
+  posY      Int      @default(0)
+  w         Int      @default(4)
+  h         Int      @default(3)
+  createdAt DateTime @default(now())
+}
+
+model Integration {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  config    String   @default("{}") // AES-256-GCM encrypted JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  key   String @id
+  value String // JSON value
+}

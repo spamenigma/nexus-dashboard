@@ -1,0 +1,63 @@
+# Nexus Dashboard — Redundant pair (two-node HA)
+#
+# Requires a shared volume (NFS / SMB / CIFS) mounted at ./data on both Docker hosts,
+# or a single host with both containers sharing the same bind-mount path.
+#
+# Route with sticky sessions in NPMPlus / any reverse proxy so a single browser
+# session always hits the same node (prevents SSE stream restarts mid-session).
+#
+# All nodes share one SQLite DB at /data/nexus.db — write load is low (layout saves,
+# settings changes) so SQLite WAL mode handles concurrent reads from both nodes fine.
+# For high write workloads, swap DATABASE_URL to a Postgres connection string instead.
+#
+# Usage:
+#   docker compose -f docker-compose.ha.yml up -d
+#
+# Secrets — create .env with:
+#   ENCRYPTION_KEY=<32-byte hex>
+#   SESSION_SECRET=<random string>
+
+services:
+  nexus-1:
+    image: nexus-dashboard:latest
+    build: .
+    container_name: nexus-1
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      DATABASE_URL: file:/data/nexus.db
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+      NODE_ID: "1"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  nexus-2:
+    image: nexus-dashboard:latest
+    container_name: nexus-2
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      DATABASE_URL: file:/data/nexus.db
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+      NODE_ID: "2"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      nexus-1:
+        condition: service_healthy

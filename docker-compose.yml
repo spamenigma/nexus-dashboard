@@ -1,0 +1,20 @@
+services:
+  nexus:
+    build: .
+    image: nexus-dashboard:latest
+    container_name: nexus
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      DATABASE_URL: file:/data/nexus.db
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      SESSION_SECRET: ${SESSION_SECRET}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

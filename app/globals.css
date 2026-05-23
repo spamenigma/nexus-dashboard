@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --accent: #6366f1;
+  --accent-glow: #6366f140;
+  --bg: #0a0a0f;
+  --bg-surface: #111118;
+  --bg-elevated: #1a1a24;
+  --fg: #e8e8f0;
+  --fg-muted: #8888a0;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.14);
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-scale: 1;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: calc(16px * var(--font-scale));
 }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-muted); }
+
+.bg-animated-gradient {
+  background: linear-gradient(135deg, #0a0a0f 0%, #0f0f1e 40%, #0d0a1a 70%, #0a0f14 100%);
+  background-size: 400% 400%;
+  animation: bgshift 20s ease infinite;
+}
+
+@keyframes bgshift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.widget-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.widget-solid {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.widget-minimal {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.accent-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.react-grid-placeholder {
+  background: var(--accent) !important;
+  opacity: 0.15 !important;
+  border-radius: var(--radius) !important;
+  border: 2px dashed var(--accent) !important;
+}
+
+.react-resizable-handle { opacity: 0; transition: opacity 0.2s; }
+.react-grid-item:hover .react-resizable-handle,
+.edit-mode .react-resizable-handle { opacity: 1; }
+.react-resizable-handle::after { border-color: var(--accent) !important; }
+
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-dot.ok    { background: #22c55e; box-shadow: 0 0 6px #22c55e80; }
+.status-dot.warn  { background: #f59e0b; box-shadow: 0 0 6px #f59e0b80; }
+.status-dot.error { background: #ef4444; box-shadow: 0 0 6px #ef444480; animation: pulse-red 1.5s ease-in-out infinite; }
+.status-dot.unknown { background: var(--fg-muted); }
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 6px #ef444480; }
+  50%       { box-shadow: 0 0 16px #ef4444cc; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-surface) 50%, var(--bg-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.text-accent      { color: var(--accent); }
+.text-accent-glow { color: var(--accent); text-shadow: 0 0 20px var(--accent-glow); }
+
+.input-field {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field option { background: var(--bg-surface); }
