@@ -26,12 +26,9 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/lib/generated ./lib/generated
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-# Copy the Prisma CLI so migrate deploy works at startup
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/scripts ./scripts
 
-RUN mkdir -p /data && chown -R nexus:nexus /data /app/node_modules/prisma /app/node_modules/.bin/prisma
+RUN mkdir -p /data && chown -R nexus:nexus /data /app
 
 VOLUME ["/data"]
 
@@ -42,4 +39,4 @@ ENV HOSTNAME=0.0.0.0
 ENV DATABASE_URL=file:/data/nexus.db
 
 # Run migrations then start
-CMD sh -c "node node_modules/prisma/build/index.js migrate deploy && node server.js"
+CMD sh -c "node scripts/migrate.mjs && node server.js"
