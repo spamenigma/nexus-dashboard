@@ -74,10 +74,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` skipped/deferred
 ### Docker
 - [x] `Dockerfile` — multi-stage (builder → runner)
 - [x] `.dockerignore`
-- [x] `docker-compose.yml` — single node, volume mount for `/data`
+- [x] `docker/docker-compose.portainer.yml` — Portainer GitOps stack (port 3005, external `nexus-dashboard_data` volume)
 - [x] `docker-compose.ha.yml` — two-node HA setup (shared volume, sticky sessions via reverse proxy)
 - [x] Health check endpoint (`/api/health`)
-- [x] Startup migration runner (Prisma migrate deploy on container start)
+- [x] Startup migration runner (`scripts/migrate.mjs` — uses `@libsql/client` directly, no Prisma CLI needed)
+- [x] Deployed to tethys via Portainer stack — live at `http://192.168.150.188:3005`
 
 ---
 
