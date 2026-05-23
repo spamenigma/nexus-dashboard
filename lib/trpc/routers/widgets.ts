@@ -21,20 +21,25 @@ export const widgetsRouter = router({
 
   create: protectedProcedure
     .input(widgetInput)
-    .mutation(({ input }) =>
-      db.widget.create({
+    .mutation(async ({ input }) => {
+      const existing = await db.widget.findMany({
+        where: { pageId: input.pageId },
+        select: { posY: true, h: true },
+      });
+      const nextY = existing.reduce((max, w) => Math.max(max, w.posY + w.h), 0);
+      return db.widget.create({
         data: {
           type: input.type,
           pageId: input.pageId,
           title: input.title ?? "",
           config: JSON.stringify(input.config ?? {}),
           posX: input.posX ?? 0,
-          posY: input.posY ?? 999,
+          posY: input.posY ?? nextY,
           w: input.w ?? 4,
           h: input.h ?? 3,
         },
-      })
-    ),
+      });
+    }),
 
   update: protectedProcedure
     .input(z.object({
