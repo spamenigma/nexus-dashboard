@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { GridLayout } from "react-grid-layout";
+import { GridLayout, noCompactor } from "react-grid-layout";
 import type { Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -122,6 +122,7 @@ export function DashboardGrid({ pageId, editMode, widgetStyle }: DashboardGridPr
           gridConfig={{ cols: 12, rowHeight: 60, margin: [12, 12] as [number, number], containerPadding: null, maxRows: Infinity }}
           dragConfig={{ enabled: editMode, handle: ".widget-drag-handle" }}
           resizeConfig={{ enabled: editMode, handles: ["se"] as ["se"] }}
+          compactor={noCompactor}
           onLayoutChange={onLayoutChange}
           className="layout"
         >
